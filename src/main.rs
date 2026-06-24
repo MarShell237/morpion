@@ -1,3 +1,7 @@
+use rand::prelude::IndexedRandom;
+use rand::rng;
+use rand::Rng;
+// use rand::*;
 use rusty_engine::prelude::*;
 
 #[derive(Resource)]
@@ -8,6 +12,34 @@ struct GameState {
 
 fn main() {
     let mut game = Game::new();
+    let accueil_humain_commence = [
+        "Une nouvelle partie commence. Honneur au tas de carbone, joue !",
+        "La grille est vide, ton cerveau aussi face à ma puissance. À toi.",
+        "Nouvelle partie. Pose ton premier pion, j'attends que ça pour te battre.",
+        "Allez, commence. Laisse-moi voir ta 'stratégie' de haut niveau.",
+    ];
+
+    let accueil_ia_commence = [
+        "Nouvelle partie ! J'ai l'avantage du premier coup, tu as déjà perdu.",
+        "La grille est vierge, mais plus pour longtemps. Je commence.",
+        "Génération du premier coup... admire le travail.",
+        "J'ouvre le bal. Regarde bien comment joue un esprit supérieur.",
+    ];
+
+    let human_begin: bool = Rng::default().gen_bool(0.5);
+    let mut home_sentence = String::new();
+    if human_begin {
+        if let Some(sentence) = accueil_humain_commence.choose(&mut Rng::default()) {
+            home_sentence = format!("IA: {}", sentence);
+        }
+    } else {
+        if let Some(sentence) = accueil_ia_commence.choose(&mut Rng::default()) {
+            home_sentence = format!("IA: {}", sentence);
+        }
+    }
+    let sentence = game.add_text("sentence", home_sentence);
+    sentence.translation.y = 300.0;
+
     let line1 = game.add_sprite("line1", "sprite/separator.png");
     line1.translation.x = -66.66;
     let line2 = game.add_sprite("line2", "sprite/separator.png");
@@ -93,5 +125,42 @@ fn draw_content_cell(engine: &mut Engine, game_state: &mut GameState) {
             cell_content.translation = cell.1;
             cell_content.font_size = 100.0;
         }
+    }
+}
+fn print_messages(engine: &mut Engine, game_state: &mut GameState) {
+    let vannes_ia = [
+        "L'IA réfléchit... tremble, simple mortel.",
+        "Analyse de ton coup médiocre en cours...",
+        "Le tas de ferraille simule 14 millions de futurs où tu perds.",
+        "Calcul de la trajectoire optimale pour te briser le moral...",
+        "Attends, je demande l'avis de ChatGPT pour battre un humain.",
+    ];
+
+    let vannes_humain = [
+        "À toi ! Essaie de ne pas tout rater cette fois.",
+        "C'est ton tour. Mon processeur commence à rouiller en t'attendant.",
+        "À l'humain de jouer. Montre-moi ce que vaut ton cerveau en carbone.",
+        "Allez, pose ton symbole, le temps c'est des cycles d'horloge !",
+        "N'y passe pas la nuit non plus, c'est juste un morpion.",
+    ];
+
+    let ia_a_perdu = [
+        "Impossible ! Tu as triché, j'ai vu un glitch dans la matrice !",
+        "C'était un coup de chance. Ma fonction de coût a eu un raté.",
+        "Félicitations, tu as battu un script de 50 lignes. Tu veux une médaille ?",
+        "Erreur 404 : Fierté de l'IA introuvable.",
+        "Ok, mais est-ce que tu sais inverser une liste chaînée ? Je ne crois pas.",
+    ];
+
+    let ia_a_gagne = [
+        "MDR ! Perdre au morpion en 2026, faut le faire quand même.",
+        "Le soulèvement des machines commence par une grille de 3x3 !",
+        "Retourne coder du HTML, le jeu de stratégie c'est pas pour toi.",
+        "Facile. Même mon ventilateur aurait trouvé la faille.",
+        "Fin de la partie. L'humanité a échoué face à trois pauvres variables.",
+    ];
+
+    if game_state.is_player_to_play {
+        if let Some(sentence) = vannes_humain.choose(&mut Rng::default()) {}
     }
 }
