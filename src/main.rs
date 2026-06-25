@@ -60,14 +60,15 @@ fn main() {
     line4.translation.y = 66.66;
     line4.rotation = UP;
     let line5 = game.add_sprite("line5", "sprite/separator.png");
-    line5.translation.y = 200.0;
+    line5.translation.x = 200.0;
     let line6 = game.add_sprite("line6", "sprite/separator.png");
-    line6.translation.y = -200.0;
+    line6.translation.x = -200.0;
     let line7 = game.add_sprite("line7", "sprite/separator.png");
-    line7.translation.x = -200.0;
+    line7.translation.y = -200.0;
     line7.rotation = UP;
     let line8 = game.add_sprite("line8", "sprite/separator.png");
-    let line9 
+    line8.translation.y = 200.0;
+    line8.rotation = UP;
     let grid: [[(u8, Vec2); 3]; 3] = [
         [
             (0, Vec2::new(-133.33, 133.33)),
