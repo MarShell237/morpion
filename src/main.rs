@@ -1,14 +1,21 @@
 use rand::prelude::IndexedRandom;
-use rand::rng;
-use rand::Rng;
+// use rand::rng;
 use rand::RngExt;
 // use rand::*;
 use rusty_engine::prelude::*;
+
+#[derive(PartialEq, Clone, Copy)]
+enum Round {
+    PlayerTurn,
+    AiTurn,
+    Verification,
+}
 
 #[derive(Resource)]
 struct GameState {
     grid: [[(u8, Vec2); 3]; 3],
     is_player_to_play: bool,
+    wait: bool,
 }
 
 fn main() {
@@ -52,6 +59,15 @@ fn main() {
     let line4 = game.add_sprite("line4", "sprite/separator.png");
     line4.translation.y = 66.66;
     line4.rotation = UP;
+    let line5 = game.add_sprite("line5", "sprite/separator.png");
+    line5.translation.y = 200.0;
+    let line6 = game.add_sprite("line6", "sprite/separator.png");
+    line6.translation.y = -200.0;
+    let line7 = game.add_sprite("line7", "sprite/separator.png");
+    line7.translation.x = -200.0;
+    line7.rotation = UP;
+    let line8 = game.add_sprite("line8", "sprite/separator.png");
+    let line9 
     let grid: [[(u8, Vec2); 3]; 3] = [
         [
             (0, Vec2::new(-133.33, 133.33)),
@@ -69,25 +85,53 @@ fn main() {
             (0, Vec2::new(133.33, -133.33)),
         ],
     ];
-    game.add_logic(update_grid);
+    game.add_logic(player_manager);
     game.add_logic(draw_content_cell);
     game.add_logic(print_messages);
     game.run(GameState {
         grid,
-        is_player_to_play: true,
+        is_player_to_play: human_begin,
+        wait: true,
     });
 }
 
-fn update_grid(engine: &mut Engine, game_state: &mut GameState) {
-    if engine.mouse_state.pressed(MouseButton::Left) {
-        let mut i: usize = 3;
-        let mut j: usize = 3;
-        if let Some(location) = engine.mouse_state.location() {
-            i = get_index_cell(-location.x as f32) as usize;
-            j = get_index_cell(location.y as f32) as usize;
-        }
-        game_state.grid[j][i].0 = if game_state.is_player_to_play { 1 } else { 2 };
-        game_state.is_player_to_play = !game_state.is_player_to_play;
+fn player_manager(engine: &mut Engine, game_state: &mut GameState) {
+    if !game_state.is_player_to_play {
+        return;
+    }
+
+    if engine.mouse_state.just_pressed(MouseButton::Left) {
+        let (i, j) = if let Some(location) = engine.mouse_state.location() {
+            (
+                get_index_cell(-location.x as f32) as usize,
+                get_index_cell(location.y as f32) as usize,
+            )
+        } else {
+            (3, 3)
+        };
+        game_state.grid[j][i].0 = 1;
+        game_state.is_player_to_play = false;
+        game_state.wait = false;
+    }
+}
+
+fn ai_manager(engine: &mut Engine, game_state: &mut GameState) {
+    if game_state.is_player_to_play {
+        return;
+    }
+
+    if engine.mouse_state.just_pressed(MouseButton::Left) {
+        let (i, j) = if let Some(location) = engine.mouse_state.location() {
+            (
+                get_index_cell(-location.x as f32) as usize,
+                get_index_cell(location.y as f32) as usize,
+            )
+        } else {
+            (3, 3)
+        };
+        game_state.grid[j][i].0 = 1;
+        game_state.is_player_to_play = false;
+        game_state.wait = false;
     }
 }
 
@@ -127,6 +171,10 @@ fn draw_content_cell(engine: &mut Engine, game_state: &mut GameState) {
 }
 
 fn print_messages(engine: &mut Engine, game_state: &mut GameState) {
+    if game_state.wait {
+        return;
+    }
+
     let vannes_ia = [
         "L'IA réfléchit... tremble, simple mortel.",
         "Analyse de ton coup médiocre en cours...",
@@ -171,4 +219,5 @@ fn print_messages(engine: &mut Engine, game_state: &mut GameState) {
             sentence.value = new_sentence.to_string();
         }
     }
+    game_state.wait = true;
 }
