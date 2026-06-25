@@ -1,6 +1,7 @@
 use rand::prelude::IndexedRandom;
 use rand::rng;
 use rand::Rng;
+use rand::RngExt;
 // use rand::*;
 use rusty_engine::prelude::*;
 
@@ -26,14 +27,15 @@ fn main() {
         "J'ouvre le bal. Regarde bien comment joue un esprit supérieur.",
     ];
 
-    let human_begin: bool = Rng::default().gen_bool(0.5);
+    let mut rng = rand::rng();
+    let human_begin: bool = rng.random();
     let mut home_sentence = String::new();
     if human_begin {
-        if let Some(sentence) = accueil_humain_commence.choose(&mut Rng::default()) {
+        if let Some(sentence) = accueil_humain_commence.choose(&mut rng) {
             home_sentence = format!("IA: {}", sentence);
         }
     } else {
-        if let Some(sentence) = accueil_ia_commence.choose(&mut Rng::default()) {
+        if let Some(sentence) = accueil_ia_commence.choose(&mut rng) {
             home_sentence = format!("IA: {}", sentence);
         }
     }
@@ -69,6 +71,7 @@ fn main() {
     ];
     game.add_logic(update_grid);
     game.add_logic(draw_content_cell);
+    game.add_logic(print_messages);
     game.run(GameState {
         grid,
         is_player_to_play: true,
@@ -79,17 +82,12 @@ fn update_grid(engine: &mut Engine, game_state: &mut GameState) {
     if engine.mouse_state.pressed(MouseButton::Left) {
         let mut i: usize = 3;
         let mut j: usize = 3;
-        let mut cell_content_number: u8 = 0;
         if let Some(location) = engine.mouse_state.location() {
             i = get_index_cell(-location.x as f32) as usize;
             j = get_index_cell(location.y as f32) as usize;
         }
-        if game_state.is_player_to_play {
-            cell_content_number = 1;
-        } else {
-            cell_content_number = 2;
-        }
-        game_state.grid[j][i].0 = cell_content_number;
+        game_state.grid[j][i].0 = if game_state.is_player_to_play { 1 } else { 2 };
+        game_state.is_player_to_play = !game_state.is_player_to_play;
     }
 }
 
@@ -127,6 +125,7 @@ fn draw_content_cell(engine: &mut Engine, game_state: &mut GameState) {
         }
     }
 }
+
 fn print_messages(engine: &mut Engine, game_state: &mut GameState) {
     let vannes_ia = [
         "L'IA réfléchit... tremble, simple mortel.",
@@ -160,7 +159,16 @@ fn print_messages(engine: &mut Engine, game_state: &mut GameState) {
         "Fin de la partie. L'humanité a échoué face à trois pauvres variables.",
     ];
 
+    let mut rng = rand::rng();
+    let sentence = engine.texts.get_mut("sentence").unwrap();
+
     if game_state.is_player_to_play {
-        if let Some(sentence) = vannes_humain.choose(&mut Rng::default()) {}
+        if let Some(new_sentence) = vannes_humain.choose(&mut rng) {
+            sentence.value = new_sentence.to_string();
+        }
+    } else {
+        if let Some(new_sentence) = vannes_ia.choose(&mut rng) {
+            sentence.value = new_sentence.to_string();
+        }
     }
 }
