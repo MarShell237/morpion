@@ -100,6 +100,7 @@ fn main() {
     game.add_logic(ai_manager);
     game.add_logic(draw_content_cell);
     game.add_logic(verify);
+    game.add_logic(restart);
     game.add_logic(print_messages);
     game.run(GameState {
         grid,
@@ -212,6 +213,19 @@ fn verify(engine: &mut Engine, game_state: &mut GameState) {
         "Fin de la partie. L'humanité a échoué face à trois pauvres variables.",
     ];
 
+    let match_nul = [
+        "Un match nul ? Tu as eu de la chance, mon algorithme a eu un hoquet.",
+        "On se neutralise... C'est digne d'un duel de Shingeki no Kyojin, personne ne lâche !",
+        "Franchement, bloquer une IA sur un 3x3, c'est ton plus grand exploit ?",
+        "Pas de vainqueur, pas de vaincu. Juste deux cerveaux qui fument pour rien.",
+        "0-0. Même l'arbitre s'est endormi devant nos calculs.",
+        "Bravo, tu as réussi à ne pas perdre. C'est presque une victoire pour toi, non ?",
+        "La grille est pleine, comme mon envie de rejouer pour t'écraser.",
+        "Une égalité... Mon CPU refuse de rester sur ce score, on relance !",
+        "Tu codes comme tu joues ? Parce que là, ça manque cruellement d'ouverture.",
+        "On a bloqué la matrice. Même pas un pixel pour faire la différence.",
+    ];
+
     // verifie si les colonnes sont alignes
     let mut winner: u8 = 3;
     for (_i, line) in game_state.grid.iter().enumerate() {
@@ -275,6 +289,25 @@ fn verify(engine: &mut Engine, game_state: &mut GameState) {
         }
         game_state.is_finish = true;
         game_state.score.1 += 1;
+        engine.texts.get_mut("score_ai").unwrap().value =
+            String::from(format!("IA: {}", game_state.score.1));
+    }
+
+    if winner > 2 {
+        'main_loop: for i in 0..3 {
+            for j in 0..3 {
+                if game_state.grid[i][j].0 == 0 {
+                    break 'main_loop;
+                }
+                if i == 2 && j == 2 {
+                    if let Some(new_sentence) = match_nul.choose(&mut rng) {
+                        engine.texts.get_mut("sentence").unwrap().value = new_sentence.to_string();
+                    }
+                    game_state.is_finish = true;
+                    return;
+                }
+            }
+        }
     }
 }
 
@@ -285,6 +318,37 @@ fn restart(engine: &mut Engine, game_state: &mut GameState) {
 
     engine.texts.get_mut("restart_info").unwrap().value =
         String::from("Apputer sur la touche 'ESPACE' pour jouer une nouvelle partie.");
+
+    if engine.keyboard_state.pressed(KeyCode::Space) {
+        let mut rng = rand::rng();
+        let human_begin: bool = rng.random();
+        let grid: [[(u8, Vec2); 3]; 3] = [
+            [
+                (0, Vec2::new(-133.33, 133.33)),
+                (0, Vec2::new(0.0, 133.33)),
+                (0, Vec2::new(133.33, 133.33)),
+            ],
+            [
+                (0, Vec2::new(-133.33, 0.0)),
+                (0, Vec2::new(0.0, 0.0)),
+                (0, Vec2::new(133.33, 0.0)),
+            ],
+            [
+                (0, Vec2::new(-133.33, -133.33)),
+                (0, Vec2::new(0.0, -133.33)),
+                (0, Vec2::new(133.33, -133.33)),
+            ],
+        ];
+        *game_state = GameState {
+            grid,
+            score: game_state.score,
+            is_player_to_play: human_begin,
+            is_wait: false,
+            is_finish: false,
+            ai_timer: Timer::from_seconds(3.0, TimerMode::Once),
+        };
+        engine.texts.get_mut("restart_info").unwrap().value = String::new();
+    }
 }
 
 fn print_messages(engine: &mut Engine, game_state: &mut GameState) {
