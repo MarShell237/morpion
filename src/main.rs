@@ -1,7 +1,5 @@
 use rand::prelude::IndexedRandom;
-// use rand::rng;
 use rand::RngExt;
-// use rand::*;
 use rusty_engine::prelude::*;
 
 #[derive(Resource)]
